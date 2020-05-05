@@ -111,19 +111,7 @@
       ],
       "properties": {
         "mint": {
-          "type": "object",
-          "required": [
-            "description",
-            "name"
-          ],
-          "properties": {
-            "description": {
-              "type": "string"
-            },
-            "name": {
-              "type": "string"
-            }
-          }
+          "type": "object"
         }
       }
     }

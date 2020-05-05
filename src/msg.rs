@@ -36,12 +36,9 @@ pub enum HandleMsg {
         owner: HumanAddr,
         recipient: HumanAddr,
     },
-    // MINT="{\"mint\":{\"name\": \"token-1\", \"description\": \"This is genesis token.\"}}"
+    // MINT="{\"mint\":{}}"
     // wasmcli tx wasm execute $CONTRACT $MINT --from validator -y
-    Mint {
-        name: String,
-        description: String,
-    },
+    Mint {},
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]

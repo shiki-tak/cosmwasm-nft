@@ -39,7 +39,7 @@ pub fn handle<S: Storage, A: Api>(
         HandleMsg::TransferFrom { sender, recipient, token_id } => transfer_from(deps, env, &sender, &recipient, token_id),
         HandleMsg::Approve { recipient, token_id } => approve(deps, env, &recipient, token_id),
         HandleMsg::ApproveForAll { owner, recipient } => approve_for_all(deps, env, &owner, &recipient),
-        HandleMsg::Mint {name, description } => mint(deps, env, &name, &description),
+        HandleMsg::Mint {} => mint(deps, env),
     }
 }
 
@@ -96,9 +96,11 @@ fn execute_transfer<S: Storage, A: Api>(
     /* update owner_tokens_store */
     // for from addr
     update_owner_tokens_store(&mut deps.storage, &token_id, &from, false)?;
-
     // for to addr
     update_owner_tokens_store(&mut deps.storage, &token_id, &to, true)?;
+
+    // update token_owner_store
+    write_token_owner_store(&mut deps.storage, &token_id, &to)?;
 
     let logs = vec![
         log("action", "transfer_from"),
@@ -118,6 +120,7 @@ fn update_owner_tokens_store<T: Storage>(
     let mut token_id_set = read_owner_tokens_store(store, &owner)?;
     if received {
         token_id_set.push(token_id.clone());
+        write_owner_tokens_store(store, &owner, &token_id_set)?;
     } else {
         let mut new_token_id_set :Vec<TokenId> = Vec::new();
         for elm in token_id_set.clone().into_iter() {
@@ -125,11 +128,9 @@ fn update_owner_tokens_store<T: Storage>(
                 continue;
             }
             new_token_id_set.push(elm);
-            token_id_set = new_token_id_set.clone();
         }
+        write_owner_tokens_store(store, &owner, &new_token_id_set)?;
     }
-    write_owner_tokens_store(store, &owner, &token_id_set)?;
-
     Ok(())
 }
 
@@ -171,8 +172,6 @@ fn approve_for_all<S: Storage, A: Api>(
 fn mint<S: Storage, A: Api>(
     deps: &mut Extern<S, A>,
     env: Env,
-    name: &String,
-    description: &String,
 ) -> Result<Response> {
     let owner = &env.message.signer;
 
@@ -193,8 +192,6 @@ fn mint<S: Storage, A: Api>(
         log: vec![
             log("action", "mint"),
             log("token_id", &new_token_id.to_string()),
-            log("name", name),
-            log("description", description),
         ],
         data: None,
     };
