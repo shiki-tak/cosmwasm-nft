@@ -186,16 +186,12 @@ fn mint<S: Storage, A: Api>(
     write_minted_token_id_store(&mut deps.storage, &token_id_set)?;
     write_owner_tokens_store(&mut deps.storage, &owner, &token_id_set)?;
 
-    // TODO: create private method
-    let res = Response {
-        messages: vec![],
-        log: vec![
-            log("action", "mint"),
-            log("token_id", &new_token_id.to_string()),
-        ],
-        data: None,
-    };
-    Ok(res)
+    let logs = vec![
+        log("action", "mint"),
+        log("token_id", &new_token_id.to_string()),
+    ];
+
+    Ok(response(logs))
 }
 
 fn balance<S: Storage, A: Api>(deps: &Extern<S, A>, address: &HumanAddr) -> Result<Vec<u8>> {
