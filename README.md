@@ -1,73 +1,87 @@
-# Cosmwasm Starter Pack
+# COSMWASM-NFT
 
-This is a template to build smart contracts in Rust to run inside a
-[Cosmos SDK](https://github.com/cosmos/cosmos-sdk) module on all chains that enable it.
-To understand the framework better, please read the overview in the
-[cosmwasm repo](https://github.com/confio/cosmwasm/blob/master/README.md),
-and dig into the [cosmwasm docs](https://www.cosmwasm.com).
-This assumes you understand the theory and just want to get coding.
-
-## Creating a new repo from template
-
-Assuming you have a recent version of rust and cargo installed (via [rustup](https://rustup.rs/)),
-then the following should get you a new repo to start a contract:
-
-First, install
-[cargo generate](https://github.com/ashleygwilliams/cargo-generate).
-Unless you did that before, run this line now:
-
-```shell script
-cargo install cargo-generate --features vendored-openssl
+## 1. Checkout code and compile
+```
+git clone https://github.com/CosmWasm/wasmd.git
+cd wasmd
+make install
 ```
 
-Now, use it to create your new contract.
-Go to the folder in which you want to place it and run:
+## 2. Set up a single-node local testnet
+```
+# if you've done this before, wipe out all data from last run
+# this may wipe out keys, make sure you know you want to do this
+rm -rf ~/.wasmd
 
-```shell script
-cargo generate --git https://github.com/confio/cosmwasm-template.git --name YOUR_NAME_HERE
+cd $HOME
+wasmd init --chain-id=testing testing
+
+# if you've done this before, check which keys are created locally first
+# wasmcli keys list
+# you can skip any "add" steps if they already exist
+wasmcli keys add validator
+
+wasmd add-genesis-account $(wasmcli keys show validator -a) 1000000000stake,1000000000validatortoken
+# You can add a few more accounts here if you wish (for experiments beyond the tutorial)
+
+wasmd gentx --name validator
+wasmd collect-gentxs
+wasmd start
 ```
 
-You will now have a new folder called `YOUR_NAME_HERE` (I hope you changed that to something else)
-containing a simple working contract and build system that you can customize.
+## 3. Connecting with a Client
+```
+wasmcli config chain-id testing
+wasmcli config trust-node true
+wasmcli config node tcp://localhost:26657
+wasmcli config output json
+wasmcli config indent true
+# this is important, so the cli returns after the tx is in a block,
+# and subsequent queries return the proper results
+wasmcli config broadcast-mode block
 
-## Create a Repo
+wasmcli keys add fred
+wasmcli keys add bob
+wasmcli keys list
 
-After generating, you have a initialized local git repo, but no commits, and no remote.
-Go to a server (eg. github) and create a new upstream repo (called `YOUR-GIT-URL` below).
-Then run the following:
-
-```bash
-# this is needed to create a valid Cargo.lock file (see below)
-cargo check
-git add .
-git commit -m 'Initial Commit'
-git remote add origin YOUR-GIT-URL
-git push -u origin master
+# verify initial setup
+wasmcli query account $(wasmcli keys show validator -a)
 ```
 
-## CI Support
+## 4. Uploading the Code
+```
+# for the rest of this section, we assume you are in the same path as the rust contract (Cargo.toml)
+cd <path/to/rust/code>
 
-We have templates for both github actions and Circle CI in the generated project, so you can
-get up an running with CI right away. One note is that the CI runs all `cargo` commands
-with `--locked` to ensure it uses the exact same versions as you have locally. This also means
-you must have an up-to-date `Cargo.lock` file, which is not auto-generated.
+# and recompile wasm
+docker run --rm -v $(pwd):/code \
+  --mount type=volume,source=$(basename $(pwd))_cache,target=/code/target \
+  --mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
+  confio/cosmwasm-opt:0.7.2
 
-The first time you set up the project (or after adding any dep), you should ensure the
-`Cargo.lock` file is updated, so the CI will test properly. This can be done simply by
-running `cargo check` or `cargo unit-test`
+# ensure the hash changed
+cat hash.txt
 
-## Using your project
+# both should be empty
+wasmcli query wasm list-code
 
-Once you have your custom repo, you should check out [Developing](./Developing.md) to explain
-more on how to run tests and develop code. Or go through the
-[online tutorial](https://www.cosmwasm.com/docs/getting-started/intro) to get a better feel
-of how to develop.
+# upload and see we create code 1
+wasmcli tx wasm store contract.wasm --from validator --gas 42000000 -y
+wasmcli query wasm list-code
+wasmcli query wasm list-contract-by-code 1
+```
 
-[Publishing](./Publishing.md) contains useful information on how to publish your contract
-to the world, once you are ready to deploy it on a running blockchain. And
-[Importing](./Importing.md) contains information about pulling in other contracts or crates
-that have been published.
+## 5. Instantiating the Contract
+```
+# instantiate contract and verify
+INIT="{\"name\":\"wasm-cosmwasm_nft\", \"symbol\":\"WSM\"}"
+wasmcli tx wasm instantiate 1 "$INIT" --from validator --amount=50000stake  --label "nft-contract" -y
 
-Please replace this README file with information about your specific project. You can keep
-the `Developing.md` and `Publishing.md` files as useful referenced, but please set some
-proper description in the README.
+# check the contract state (and account balance)
+wasmcli query wasm list-contract-by-code 1
+# contracts ids (like code ids) are based on an auto-gen sequence
+# if this is the first contract in the devnet, it will have this address (otherwise, use the result from list-contract-by-code)
+CONTRACT=cosmos18vd8fpwxzck93qlwghaj6arh4p7c5n89uzcee5
+wasmcli query wasm contract $CONTRACT
+wasmcli query account $CONTRACT
+```
