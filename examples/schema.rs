@@ -4,8 +4,8 @@ use std::path::PathBuf;
 
 use schemars::{schema::RootSchema, schema_for};
 
-use nft_mvp::msg::{HandleMsg, InitMsg, QueryMsg};
-use nft_mvp::types::{State, TokenId};
+use cosmwasm_nft::msg::{HandleMsg, InitMsg, QueryMsg};
+use cosmwasm_nft::types::{State, TokenId};
 
 fn main() {
     let mut out_dir = current_dir().unwrap();

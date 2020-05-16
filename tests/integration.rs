@@ -33,10 +33,10 @@ use cosmwasm::types::{coin, ContractResult};
 
 use cosmwasm_vm::testing::{handle, init, mock_instance, query};
 
-use nft_mvp::msg::{CountResponse, HandleMsg, InitMsg, QueryMsg};
+use cosmwasm_nft::msg::{CountResponse, HandleMsg, InitMsg, QueryMsg};
 
 // This line will test the output of cargo wasm
-static WASM: &[u8] = include_bytes!("../target/wasm32-unknown-unknown/release/nft_mvp.wasm");
+static WASM: &[u8] = include_bytes!("../target/wasm32-unknown-unknown/release/cosmwasm_nft.wasm");
 // You can uncomment this line instead to test productionified build from cosmwasm-opt
 // static WASM: &[u8] = include_bytes!("../contract.wasm");
 

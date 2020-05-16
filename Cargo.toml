@@ -1,5 +1,5 @@
 [package]
-name = "nft_mvp"
+name = "cosmwasm_nft"
 version = "0.1.0"
 authors = ["shiki.tak <shiki.tak@gmail.com>"]
 edition = "2018"

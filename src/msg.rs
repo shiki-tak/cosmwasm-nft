@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use cosmwasm::types::HumanAddr;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-// INIT="{\"name\":\"wasm-nft_mvp\", \"symbol\":\"WSM\"}"
+// INIT="{\"name\":\"wasm-cosmwasm_nft\", \"symbol\":\"WSM\"}"
 pub struct InitMsg {
     pub name: String,
     pub symbol: String,
