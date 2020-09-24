@@ -1,39 +1,41 @@
-use cosmwasm::errors::Result;
-use cosmwasm::traits::{Api, Extern, Storage};
-use cosmwasm::types::{log, CanonicalAddr, Env, HumanAddr, Response, LogAttribute};
+use cosmwasm_std::{
+    log, to_vec, to_binary, Api, Binary, Env, Extern, HandleResponse, InitResponse, Querier,
+    StdResult, LogAttribute, Storage, CanonicalAddr, HumanAddr, Uint128,
+};
 
-use cw_storage::{serialize, PrefixedStorage};
+use cosmwasm_storage::{PrefixedStorage};
+use std::ops::{Add};
 
 use crate::msg::{HandleMsg, InitMsg, QueryMsg};
 use crate::types::*;
-use crate::resolver::*;
+use crate::store::*;
 use crate::constant::*;
 use crate::errors::*;
 
-pub fn init<S: Storage, A: Api>(
-    deps: &mut Extern<S, A>,
+pub fn init<S: Storage, A: Api, Q: Querier>(
+    deps: &mut  Extern<S, A, Q>,
     _env: Env,
     _msg: InitMsg,
-) -> Result<Response> {
+) -> StdResult<InitResponse> {
     is_valid_name(&_msg.name)?;
     is_valid_symbol(&_msg.symbol)?;
 
     let mut config_store = PrefixedStorage::new(CONFIG, &mut deps.storage);
-    let state = serialize(&State {
+    let state = to_vec(&State {
         name: _msg.name,
         symbol: _msg.symbol,
     })?;
 
     config_store.set(KEY_STATE, &state);
 
-    Ok(Response::default())
+    Ok(InitResponse::default())
 }
 
-pub fn handle<S: Storage, A: Api>(
-    deps: &mut Extern<S, A>,
+pub fn handle<S: Storage, A: Api, Q: Querier>(
+    deps: &mut  Extern<S, A, Q>,
     env: Env,
     msg: HandleMsg,
-) -> Result<Response> {
+) -> StdResult<HandleResponse> {
     match msg {
         HandleMsg::Transfer { recipient, token_id } => transfer(deps, env, &recipient, token_id),
         HandleMsg::TransferFrom { sender, recipient, token_id } => transfer_from(deps, env, &sender, &recipient, token_id),
@@ -43,7 +45,7 @@ pub fn handle<S: Storage, A: Api>(
     }
 }
 
-pub fn query<S: Storage, A: Api>(deps: &Extern<S, A>, msg: QueryMsg) -> Result<Vec<u8>> {
+pub fn query<S: Storage, A: Api, Q: Querier>(deps: & Extern<S, A, Q>, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
         QueryMsg::Balance { address } => balance(deps, &address),
         QueryMsg::Owner { token_id } => owner(deps, token_id),
@@ -51,26 +53,26 @@ pub fn query<S: Storage, A: Api>(deps: &Extern<S, A>, msg: QueryMsg) -> Result<V
     }
 }
 
-fn transfer<S: Storage, A: Api>(
-        deps: &mut Extern<S, A>,
+fn transfer<S: Storage, A: Api, Q: Querier>(
+        deps: &mut  Extern<S, A, Q>,
         env: Env,
         recipient: &HumanAddr,
-        value: u64
-) -> Result<Response> {
-    let sender_address_raw = &env.message.signer;
+        value: Uint128
+) -> StdResult<HandleResponse> {
+    let sender_address_raw = deps.api.canonical_address(&env.message.sender)?;
     let recipient_address_raw = deps.api.canonical_address(recipient)?;
     let token_id = TokenId::new(value);
 
     execute_transfer(deps, &sender_address_raw, &recipient_address_raw, &token_id)
 }
 
-fn transfer_from<S: Storage, A: Api>(
-    deps: &mut Extern<S, A>,
+fn transfer_from<S: Storage, A: Api, Q: Querier>(
+    deps: &mut  Extern<S, A, Q>,
     _env: Env,
     sender: &HumanAddr,
     recipient: &HumanAddr,
-    value: u64
-) -> Result<Response> {
+    value: Uint128
+) -> StdResult<HandleResponse> {
     let sender_address_raw = deps.api.canonical_address(sender)?;
     let recipient_address_raw = deps.api.canonical_address(recipient)?;
     let token_id = TokenId::new(value);
@@ -78,12 +80,12 @@ fn transfer_from<S: Storage, A: Api>(
     execute_transfer(deps, &sender_address_raw, &recipient_address_raw, &token_id)
 }
 
-fn execute_transfer<S: Storage, A: Api>(
-    deps: &mut Extern<S, A>,
+fn execute_transfer<S: Storage, A: Api, Q: Querier>(
+    deps: &mut  Extern<S, A, Q>,
     from: &CanonicalAddr,
     to: &CanonicalAddr,
     token_id: &TokenId,
-) -> Result<Response> {
+) -> StdResult<HandleResponse> {
     // validation token
     validate_token_id(&deps.storage, &token_id)?;
 
@@ -116,7 +118,7 @@ fn update_owner_tokens_store<T: Storage>(
     token_id: &TokenId,
     owner: &CanonicalAddr,
     received: bool
-) -> Result<()> {
+) -> StdResult<()> {
     let mut token_id_set = read_owner_tokens_store(store, &owner)?;
     if received {
         token_id_set.push(token_id.clone());
@@ -134,13 +136,13 @@ fn update_owner_tokens_store<T: Storage>(
     Ok(())
 }
 
-fn approve<S: Storage, A: Api>(
-    deps: &mut Extern<S, A>,
+fn approve<S: Storage, A: Api, Q: Querier>(
+    deps: &mut  Extern<S, A, Q>,
     env: Env,
     recipient: &HumanAddr,
-    value: u64
-) -> Result<Response> {
-    let owner = &env.message.signer;
+    value: Uint128
+) -> StdResult<HandleResponse> {
+    let owner = deps.api.canonical_address(&env.message.sender)?;
     let recipient_address_raw = deps.api.canonical_address(recipient)?;
     let token_id = TokenId::new(value);
 
@@ -160,20 +162,20 @@ fn approve<S: Storage, A: Api>(
 }
 
 // TODO: implement
-fn approve_for_all<S: Storage, A: Api>(
-    _deps: &mut Extern<S, A>,
+fn approve_for_all<S: Storage, A: Api, Q: Querier>(
+    _deps: &mut  Extern<S, A, Q>,
     _env: Env,
     _owner: &HumanAddr,
     _recipient: &HumanAddr,
-) -> Result<Response> {
+) -> StdResult<HandleResponse> {
     unimplemented!();
 }
 
-fn mint<S: Storage, A: Api>(
-    deps: &mut Extern<S, A>,
+fn mint<S: Storage, A: Api, Q: Querier>(
+    deps: &mut  Extern<S, A, Q>,
     env: Env,
-) -> Result<Response> {
-    let owner = &env.message.signer;
+) -> StdResult<HandleResponse> {
+    let owner = deps.api.canonical_address(&env.message.sender)?;
 
     // generate token
     let new_token_id = make_token_id(&mut deps.storage)?;
@@ -194,84 +196,40 @@ fn mint<S: Storage, A: Api>(
     Ok(response(logs))
 }
 
-fn balance<S: Storage, A: Api>(deps: &Extern<S, A>, address: &HumanAddr) -> Result<Vec<u8>> {
+fn balance<S: Storage, A: Api, Q: Querier>(deps: & Extern<S, A, Q>, address: &HumanAddr) -> StdResult<Binary> {
     let key = deps.api.canonical_address(address)?;
     let res = read_owner_tokens_store(&deps.storage, &key)?;
-    serialize(&res.len())
+    Ok(to_binary(&res.len())?)
 }
 
-fn owner<S: Storage, A: Api>(deps: &Extern<S, A>, value: u64) -> Result<Vec<u8>> {
+fn owner<S: Storage, A: Api, Q: Querier>(deps: & Extern<S, A, Q>, value: Uint128) -> StdResult<Binary> {
     let canonical_address = read_token_owner_store(&deps.storage, &TokenId::new(value))?;
     let res = match canonical_address {
         Some(record) => Some(deps.api.human_address(&record)?),
         _ => None,
     };
-    serialize(&res)
+    Ok(to_binary(&res)?)
 }
 
-fn allowance<S: Storage, A: Api>(deps: &Extern<S, A>, value: u64) -> Result<Vec<u8>> {
+fn allowance<S: Storage, A: Api, Q: Querier>(deps: & Extern<S, A, Q>, value: Uint128) -> StdResult<Binary> {
     let token_id = TokenId::new(value);
     let res = match read_token_approvals_store(&deps.storage, &token_id)? {
         Some(record) => Some(deps.api.human_address(&record)?),
         _ => None,
     };
-    serialize(&res)
+    Ok(to_binary(&res)?)
 }
 
-fn read_owner_tokens_store<T: Storage>(store: &T, owner: &CanonicalAddr) -> Result<Vec<TokenId>> {
-    let token_list = match owner_tokens_resolver_read(store).may_load(&owner.as_slice())? {
-        Some(record) => record,
-        None => {
-            let v: Vec<TokenId> = vec![];
-            v
-        }
-    };
-
-    Ok(token_list)
-}
-
-fn write_owner_tokens_store<T: Storage>(store: &mut T, owner: &CanonicalAddr, token_id_set: &Vec<TokenId>) -> Result<()> {
-    owner_tokens_resolver(store).save(owner.as_slice(), token_id_set)?;
-    Ok(())
-}
-
-fn read_token_owner_store<T: Storage>(store: &T, token_id: &TokenId) -> Result<Option<CanonicalAddr>> {
-    token_owner_resolver_read(store).may_load(&serialize(&token_id)?)
-}
-
-fn write_token_owner_store<T: Storage>(store: &mut T, token_id: &TokenId, owner: &CanonicalAddr) -> Result<()> {
-    token_owner_resolver(store).save(&serialize(&token_id)?, owner)?;
-    Ok(())
-}
-
-fn read_minted_token_id_store<T: Storage>(store: &T) -> Result<Option<Vec<TokenId>>> {
-    minted_token_id_resolver_read(store).may_load(b"minter")
-}
-
-fn write_minted_token_id_store<T: Storage>(store: &mut T, token_id_set: &Vec<TokenId>) -> Result<()> {
-    minted_token_ids_resolver(store).save(b"minter",token_id_set)?;
-    Ok(())
-}
-
-fn read_token_approvals_store<T: Storage>(store: &T, token_id: &TokenId) -> Result<Option<CanonicalAddr>> {
-    token_approvals_resolver_read(store).may_load(&serialize(&token_id)?)
-}
-
-fn write_token_approvals_store<T: Storage>(store: &mut T, token_id: &TokenId, addr: &CanonicalAddr) -> Result<()> {
-    token_approvals_resolver(store).save(&serialize(&token_id)?, addr)?;
-    Ok(())
-}
-
-fn make_token_id<T: Storage>(store: &mut T) -> Result<TokenId> {
+fn make_token_id<T: Storage>(store: &mut T) -> StdResult<TokenId> {
     let new_token_id = match get_current_token_id(store)? {
-        Some(v) => v.as_u64() + 1,
-        None => 0,
+        Some(v) => v.as_u128().add(Uint128(1)),
+        None => Uint128(0),
     };
 
     Ok(TokenId::new(new_token_id))
 }
 
-fn get_current_token_id<T: Storage>(store: &T) -> Result<Option<TokenId>> {
+fn get_current_token_id<T: Storage>(store: &T) -> StdResult<Option<TokenId>> {
     let token_id_set = match read_minted_token_id_store(store)? {
         Some(record) => record,
         _ => return Ok(None),
@@ -281,15 +239,15 @@ fn get_current_token_id<T: Storage>(store: &T) -> Result<Option<TokenId>> {
     Ok(Some(last_token_id))
 }
 
-fn validate_token_id<T: Storage>(store: &T, token_id: &TokenId) -> Result<()> {
+fn validate_token_id<T: Storage>(store: &T, token_id: &TokenId) -> StdResult<()> {
     let current_token_id = get_current_token_id(store)?;
-    if current_token_id.unwrap().as_u64() < token_id.as_u64() {
+    if current_token_id.unwrap().as_u128() < token_id.as_u128() {
         return err_token_not_exist();
     }
     Ok(())
 }
 
-fn validate_token_owner<T: Storage>(store: &T, token_id: &TokenId, addr: &CanonicalAddr) -> Result<()> {
+fn validate_token_owner<T: Storage>(store: &T, token_id: &TokenId, addr: &CanonicalAddr) -> StdResult<()> {
     let token_owner = match read_token_owner_store(store, &token_id)? {
         Some(v) => v,
         _ => return err_token_owner_not_exist(),
@@ -302,7 +260,7 @@ fn validate_token_owner<T: Storage>(store: &T, token_id: &TokenId, addr: &Canoni
     Ok(())
 }
 
-fn validate_allowance<T: Storage>(store: &T, token_id: &TokenId, addr: &CanonicalAddr) -> Result<()> {
+fn validate_allowance<T: Storage>(store: &T, token_id: &TokenId, addr: &CanonicalAddr) -> StdResult<()> {
     let token_approval = match read_token_approvals_store(store, &token_id)? {
         Some(v) => v,
         _ => return err_token_allowance_not_exist(),
@@ -313,18 +271,18 @@ fn validate_allowance<T: Storage>(store: &T, token_id: &TokenId, addr: &Canonica
     Ok(())
 }
 
-fn response(logs: Vec<LogAttribute>) -> Response {
-    Response {messages: vec![], log: logs, data: None}
+fn response(logs: Vec<LogAttribute>) -> HandleResponse {
+    HandleResponse {messages: vec![], log: logs, data: None}
 }
 
-fn is_valid_name(name: &str) -> Result<()> {
+fn is_valid_name(name: &str) -> StdResult<()> {
     if name.chars().count() < 3 || name.chars().count() > 30 {
         return err_invalid_name();
     }
     Ok(())
 }
 
-fn is_valid_symbol(symbol: &str) -> Result<()> {
+fn is_valid_symbol(symbol: &str) -> StdResult<()> {
     if symbol.chars().count() < 3 || symbol.chars().count() > 30 {
         return err_invalid_symbol();
     }

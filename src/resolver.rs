@@ -1,8 +1,9 @@
-use cosmwasm::traits::Storage;
-use cosmwasm::types::CanonicalAddr;
+use cosmwasm_std::{CanonicalAddr, Storage};
+
+use cosmwasm_storage::{bucket, bucket_read, Bucket, ReadonlyBucket};
+
 use crate::constant::*;
 
-use cw_storage::{bucket, bucket_read, Bucket, ReadonlyBucket};
 use crate::types::*;
 
 pub fn owner_tokens_resolver<S: Storage>(storage: &mut S) -> Bucket<S, Vec<TokenId>> {

@@ -1,7 +1,7 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use cosmwasm::types::HumanAddr;
+use cosmwasm_std::{HumanAddr, Uint128};
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 // INIT="{\"name\":\"wasm-cosmwasm_nft\", \"symbol\":\"WSM\"}"
@@ -17,20 +17,20 @@ pub enum HandleMsg {
     // wasmcli tx wasm execute $CONTRACT $TRANFER --from validator -y
     Transfer {
         recipient: HumanAddr,
-        token_id: u64,
+        token_id: Uint128,
     },
     // TRANFERFROM="{\"transfer_from\":{\"owner\": \"$(wasmcli keys show validator -a)\", \"recipient\": \"$(wasmcli keys show fred -a)\", \"token_id\": 0}}"
     // wasmcli tx wasm execute $CONTRACT $TRANFERFROM --from validator -y
     TransferFrom {
         sender: HumanAddr,
         recipient: HumanAddr,
-        token_id: u64,
+        token_id: Uint128,
     },
     // APPROVE="{\"approve\":{\"recipient\": \"$(wasmcli keys show fred -a)\", \"token_id\": 0}}"
     // wasmcli tx wasm execute $CONTRACT $APPROVE --from validator -y
     Approve {
         recipient: HumanAddr,
-        token_id: u64,
+        token_id: Uint128,
     },
     ApproveForAll {
         owner: HumanAddr,
@@ -52,11 +52,11 @@ pub enum QueryMsg {
     // OWNER="{\"owner\":{\"token_id\": 0}}"
     // wasmcli query wasm contract-state smart $CONTRACT $OWNER
     Owner {
-        token_id: u64,
+        token_id: Uint128,
     },
     // ALLOWANCE="{\"allowance\":{\"token_id\": 0}}"
     // wasmcli query wasm contract-state smart $CONTRACT $ALLOWANCE
     Allowance {
-        token_id: u64,
+        token_id: Uint128,
     },
 }
