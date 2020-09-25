@@ -1,5 +1,8 @@
 version: 2.1
 
+orbs:
+  codecov: codecov/codecov@1.0.5
+
 jobs:
   build:
     docker:
@@ -40,6 +43,8 @@ jobs:
               git status && git --no-pager diff
               exit 1
             fi
+      - codecov/upload:
+        file: lcov.info
       - save_cache:
           paths:
             - /usr/local/cargo/registry
