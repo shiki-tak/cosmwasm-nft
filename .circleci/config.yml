@@ -1,11 +1,20 @@
 version: 2.1
 
+orbs:
+  codecov: codecov/codecov@1.0.5
+
 jobs:
   build:
     docker:
       - image: rust:1.44.1
     steps:
       - checkout
+      - run:
+          name: apt-get
+          command: apt-get update && apt-get -y install lcov ruby
+      - run:
+          name: rustup install nightly
+          command: rustup install nightly
       - run:
           name: Version information
           command: rustc --version; cargo --version; rustup --version
@@ -32,17 +41,29 @@ jobs:
           name: Format source code
           command: cargo fmt
       - run:
+          name: cargo install grcov
+          command: |
+            gem install coveralls-lcov
+            cargo install grcov
+      - run:
+          name: generate coverage
+          command: |
+            PROJ_NAME=$(cat Cargo.toml | grep -E "^name" | sed -E 's/name[[:space:]]=[[:space:]]"(.*)"/\1/g' | sed -E 's/-/_/g')
+            rm -rf target/debug/deps/${PROJ_NAME}-*
+            
+            export CARGO_INCREMENTAL=0
+            export RUSTFLAGS="-Zprofile -Ccodegen-units=1 -Cinline-threshold=0 -Clink-dead-code -Coverflow-checks=off"
+            
+            cargo +nightly build --verbose
+            cargo +nightly test --verbose
+            
+            grcov ./target/debug/deps -s . -t lcov --llvm --branch --ignore-not-existing --ignore "/*" -o lcov.info
+            genhtml -o report/ --show-details --highlight --ignore-errors source --legend lcov.info
+      - codecov/upload:
+          file: lcov.info
+      - run:
           name: Build and run schema generator
           command: cargo schema --locked
-      - run:
-          name: Ensure checked-in source code and schemas are up-to-date
-          command: |
-            CHANGES_IN_REPO=$(git status --porcelain)
-            if [[ -n "$CHANGES_IN_REPO" ]]; then
-              echo "Repository is dirty. Showing 'git status' and 'git --no-pager diff' for debugging now:"
-              git status && git --no-pager diff
-              exit 1
-            fi
       - save_cache:
           paths:
             - /usr/local/cargo/registry
