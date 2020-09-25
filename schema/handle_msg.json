@@ -19,9 +19,7 @@
               "$ref": "#/definitions/HumanAddr"
             },
             "token_id": {
-              "type": "integer",
-              "format": "uint64",
-              "minimum": 0.0
+              "$ref": "#/definitions/Uint128"
             }
           }
         }
@@ -48,9 +46,7 @@
               "$ref": "#/definitions/HumanAddr"
             },
             "token_id": {
-              "type": "integer",
-              "format": "uint64",
-              "minimum": 0.0
+              "$ref": "#/definitions/Uint128"
             }
           }
         }
@@ -73,9 +69,7 @@
               "$ref": "#/definitions/HumanAddr"
             },
             "token_id": {
-              "type": "integer",
-              "format": "uint64",
-              "minimum": 0.0
+              "$ref": "#/definitions/Uint128"
             }
           }
         }
@@ -118,6 +112,9 @@
   ],
   "definitions": {
     "HumanAddr": {
+      "type": "string"
+    },
+    "Uint128": {
       "type": "string"
     }
   }
