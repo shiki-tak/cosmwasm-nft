@@ -25,11 +25,11 @@ impl TokenId {
         to_vec(&self.0).unwrap()
     }
 
-    pub fn to_string(&self) -> String {
+    pub fn as_string(&self) -> String {
         self.0.to_string()
     }
 
-    pub fn eq(&self, other: &Self) -> bool {
+    pub fn equal(&self, other: &Self) -> bool {
         self.0.eq(&other.0)
     }
 }

@@ -20,9 +20,9 @@ pub fn read_owner_tokens_store<T: Storage>(
 pub fn write_owner_tokens_store<T: Storage>(
     store: &mut T,
     owner: &CanonicalAddr,
-    token_id_set: &Vec<TokenId>,
+    token_id_set: Vec<TokenId>,
 ) -> StdResult<()> {
-    owner_tokens_resolver(store).save(owner.as_slice(), token_id_set)?;
+    owner_tokens_resolver(store).save(owner.as_slice(), &token_id_set)?;
     Ok(())
 }
 
@@ -48,9 +48,9 @@ pub fn read_minted_token_id_store<T: Storage>(store: &T) -> StdResult<Option<Vec
 
 pub fn write_minted_token_id_store<T: Storage>(
     store: &mut T,
-    token_id_set: &Vec<TokenId>,
+    token_id_set: Vec<TokenId>,
 ) -> StdResult<()> {
-    minted_token_ids_resolver(store).save(b"minter", token_id_set)?;
+    minted_token_ids_resolver(store).save(b"minter", &token_id_set)?;
     Ok(())
 }
 

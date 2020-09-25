@@ -26,8 +26,8 @@ fn export_schema(schema: &RootSchema, out_dir: &PathBuf) {
         .schema
         .metadata
         .as_ref()
-        .map(|b| b.title.clone().unwrap_or("untitled".to_string()))
-        .unwrap_or("unknown".to_string());
+        .map(|b| b.title.clone().unwrap_or_else(|| "untitled".to_string()))
+        .unwrap_or_else(|| "unknown".to_string());
     let path = out_dir.join(format!("{}.json", to_snake_case(&title)));
     let json = serde_json::to_string_pretty(schema).unwrap();
     write(&path, json + "\n").unwrap();

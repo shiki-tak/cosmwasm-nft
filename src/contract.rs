@@ -123,7 +123,7 @@ fn execute_transfer<S: Storage, A: Api, Q: Querier>(
         log("action", "transfer_from"),
         log("sender", deps.api.human_address(from)?.as_str()),
         log("recipient", deps.api.human_address(to)?.as_str()),
-        log("token_id", &token_id.to_string()),
+        log("token_id", &token_id.as_string()),
     ];
     Ok(response(logs))
 }
@@ -137,16 +137,16 @@ fn update_owner_tokens_store<T: Storage>(
     let mut token_id_set = read_owner_tokens_store(store, &owner)?;
     if received {
         token_id_set.push(token_id.clone());
-        write_owner_tokens_store(store, &owner, &token_id_set)?;
+        write_owner_tokens_store(store, &owner, token_id_set)?;
     } else {
         let mut new_token_id_set: Vec<TokenId> = Vec::new();
         for elm in token_id_set.into_iter() {
-            if token_id.eq(&elm) {
+            if token_id.equal(&elm) {
                 continue;
             }
             new_token_id_set.push(elm);
         }
-        write_owner_tokens_store(store, &owner, &new_token_id_set)?;
+        write_owner_tokens_store(store, &owner, new_token_id_set)?;
     }
     Ok(())
 }
@@ -170,7 +170,7 @@ fn approve<S: Storage, A: Api, Q: Querier>(
         log("action", "transfer_from"),
         log("owner", deps.api.human_address(&owner)?.as_str()),
         log("recipient", recipient.as_str()),
-        log("token_id", &token_id.to_string()),
+        log("token_id", &token_id.as_string()),
     ];
 
     Ok(response(logs))
@@ -197,15 +197,15 @@ fn mint<S: Storage, A: Api, Q: Querier>(
 
     write_token_owner_store(&mut deps.storage, &new_token_id, &owner)?;
 
-    let mut token_id_set = read_owner_tokens_store(&mut deps.storage, &owner)?;
+    let mut token_id_set = read_owner_tokens_store(&deps.storage, &owner)?;
 
     token_id_set.push(new_token_id.clone());
-    write_minted_token_id_store(&mut deps.storage, &token_id_set)?;
-    write_owner_tokens_store(&mut deps.storage, &owner, &token_id_set)?;
+    write_minted_token_id_store(&mut deps.storage, token_id_set.clone())?;
+    write_owner_tokens_store(&mut deps.storage, &owner, token_id_set)?;
 
     let logs = vec![
         log("action", "mint"),
-        log("token_id", &new_token_id.to_string()),
+        log("token_id", &new_token_id.as_string()),
     ];
 
     Ok(response(logs))
