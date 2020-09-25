@@ -13,7 +13,7 @@ pub struct State {
 pub struct TokenId(Uint128);
 
 impl TokenId {
-    pub fn new(v :Uint128) -> Self {
+    pub fn new(v: Uint128) -> Self {
         TokenId(v)
     }
 

@@ -46,17 +46,11 @@ pub enum HandleMsg {
 pub enum QueryMsg {
     // BALANCE="{\"balance\":{\"address\": \"$(wasmcli keys show fred -a)\"}}"
     // wasmcli query wasm contract-state smart $CONTRACT $BALANCE
-    Balance {
-        address: HumanAddr,
-    },
+    Balance { address: HumanAddr },
     // OWNER="{\"owner\":{\"token_id\": 0}}"
     // wasmcli query wasm contract-state smart $CONTRACT $OWNER
-    Owner {
-        token_id: Uint128,
-    },
+    Owner { token_id: Uint128 },
     // ALLOWANCE="{\"allowance\":{\"token_id\": 0}}"
     // wasmcli query wasm contract-state smart $CONTRACT $ALLOWANCE
-    Allowance {
-        token_id: Uint128,
-    },
+    Allowance { token_id: Uint128 },
 }

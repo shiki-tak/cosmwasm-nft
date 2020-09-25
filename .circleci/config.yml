@@ -1,12 +1,9 @@
 version: 2.1
 
-orbs:
-  codecov: codecov/codecov@1.0.5
-
 jobs:
   build:
     docker:
-      - image: rust:1.40
+      - image: rust:1.44.1
     steps:
       - checkout
       - run:
@@ -19,15 +16,18 @@ jobs:
           name: Add wasm32 target
           command: rustup target add wasm32-unknown-unknown
       - run:
-          name: Build
-          command: cargo wasm --locked
-      - run:
           name: Unit tests
           env: RUST_BACKTRACE=1
           command: cargo unit-test --locked
       - run:
-          name: Integration tests
-          command: cargo integration-test --locked
+          name: Build
+          command: cargo wasm --locked
+      - run:
+          name: rustup component add
+          command: rustup component add clippy rustfmt
+      - run:
+          name: lint
+          command: cargo clippy --all-targets -- -D warnings
       - run:
           name: Format source code
           command: cargo fmt
@@ -43,8 +43,6 @@ jobs:
               git status && git --no-pager diff
               exit 1
             fi
-      - codecov/upload:
-        file: lcov.info
       - save_cache:
           paths:
             - /usr/local/cargo/registry
@@ -55,3 +53,4 @@ jobs:
             - target/wasm32-unknown-unknown/release/build
             - target/wasm32-unknown-unknown/release/deps
           key: v4-cargo-cache-{{ arch }}-{{ checksum "Cargo.lock" }}
+          

@@ -21,7 +21,7 @@ fn main() {
 
 /// Writes schema to file. Overwrites existing file.
 /// Panics on any error writing out the schema.
-fn export_schema(schema: &RootSchema, out_dir: &PathBuf) -> () {
+fn export_schema(schema: &RootSchema, out_dir: &PathBuf) {
     let title = schema
         .schema
         .metadata

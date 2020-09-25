@@ -1,10 +1,10 @@
+pub mod constant;
 pub mod contract;
+pub mod errors;
 pub mod msg;
-pub mod types;
 pub mod resolver;
 pub mod store;
-pub mod constant;
-pub mod errors;
+pub mod types;
 
 #[cfg(test)]
 mod tests;

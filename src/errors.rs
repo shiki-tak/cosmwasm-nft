@@ -1,6 +1,4 @@
-use cosmwasm_std::{
-    StdError, StdResult,
-};
+use cosmwasm_std::{StdError, StdResult};
 
 pub fn err_invalid_name() -> StdResult<()> {
     Err(StdError::generic_err("Err invalid name format"))
