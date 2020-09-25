@@ -1,4 +1,6 @@
 # COSMWASM-NFT
+[![CircleCI](https://circleci.com/gh/shiki-tak/cosmwasm-nft.svg?style=svg)](https://circleci.com/gh/shiki-tak/cosmwasm-nft)
+[![codecov](https://codecov.io/gh/shiki-tak/cosmwasm-nft/branch/master/graph/badge.svg)](https://codecov.io/gh/shiki-tak/cosmwasm-nft)
 
 ## 1. Checkout code and compile
 ```
