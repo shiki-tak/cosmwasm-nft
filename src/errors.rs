@@ -1,29 +1,29 @@
-use cosmwasm_std::{StdError, StdResult};
+use cosmwasm_std::{StdError};
+use thiserror::Error;
 
-pub fn err_invalid_name() -> StdResult<()> {
-    Err(StdError::generic_err("Err invalid name format"))
-}
+#[derive(Error, Debug)]
+pub enum ContractError {
+    #[error("{0}")]
+    Std(#[from] StdError),
 
-pub fn err_invalid_symbol() -> StdResult<()> {
-    Err(StdError::generic_err("Err invalid symbol format"))
-}
+    #[error("Err invalid name format")]
+    InvalidNameFormat {},
 
-pub fn err_invalid_token_owner() -> StdResult<()> {
-    Err(StdError::generic_err("Err invalid token owner"))
-}
+    #[error("Err invalid symbol format")]
+    InvalidSymbolFormat {},
 
-pub fn err_token_not_exist() -> StdResult<()> {
-    Err(StdError::generic_err("Err token not exist"))
-}
+    #[error("Err invalid token owner")]
+    InvalidTokenOwner {},
 
-pub fn err_token_owner_not_exist() -> StdResult<()> {
-    Err(StdError::generic_err("Err token owner not exist"))
-}
+    #[error("Err token not exist")]
+    NotExistToken {},
 
-pub fn err_token_allowance_not_exist() -> StdResult<()> {
-    Err(StdError::generic_err("Err token allowance not exist"))
-}
+    #[error("Err token owner not exist")]
+    NotExistTokenOwner {},
 
-pub fn err_invalid_token_allowance() -> StdResult<()> {
-    Err(StdError::generic_err("Err invalid token allowance"))
+    #[error("Err token allowance not exist")]
+    NotExistTokenAllowance {},
+
+    #[error("Err invalid token allowance")]
+    InvalidTokenAllowance {},
 }

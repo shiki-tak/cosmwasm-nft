@@ -4,7 +4,7 @@ use std::path::PathBuf;
 
 use schemars::{schema::RootSchema, schema_for};
 
-use cosmwasm_nft::msg::{HandleMsg, InitMsg, QueryMsg};
+use cosmwasm_nft::msg::{InstantiateMsg, ExecuteMsg, QueryMsg};
 use cosmwasm_nft::types::{State, TokenId};
 
 fn main() {
@@ -12,8 +12,8 @@ fn main() {
     out_dir.push("schema");
     create_dir_all(&out_dir).unwrap();
 
-    export_schema(&schema_for!(InitMsg), &out_dir);
-    export_schema(&schema_for!(HandleMsg), &out_dir);
+    export_schema(&schema_for!(InstantiateMsg), &out_dir);
+    export_schema(&schema_for!(ExecuteMsg), &out_dir);
     export_schema(&schema_for!(QueryMsg), &out_dir);
     export_schema(&schema_for!(State), &out_dir);
     export_schema(&schema_for!(TokenId), &out_dir);

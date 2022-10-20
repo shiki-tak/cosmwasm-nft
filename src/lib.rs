@@ -6,8 +6,7 @@ pub mod resolver;
 pub mod store;
 pub mod types;
 
+pub use crate::msg::ExecuteMsg;
+
 #[cfg(test)]
 mod tests;
-
-#[cfg(target_arch = "wasm32")]
-cosmwasm_std::create_entry_points!(contract);
